@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Detection</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #172033;
+        }
+
+        header {
+            background: #14213d;
+            color: white;
+            padding: 22px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+        }
+
+        main {
+            max-width: 750px;
+            margin: 45px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 5px 20px #00000012;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 180px;
+            padding: 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 18px;
+            padding: 15px;
+            border: none;
+            border-radius: 9px;
+            background: #2563eb;
+            color: white;
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        #result {
+            margin-top: 22px;
+            padding: 16px;
+            border-radius: 10px;
+            background: #f1f5f9;
+            white-space: pre-line;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Fake News Detection</h1>
+        <p>Use Machine Learning to analyze news text</p>
+    </header>
+
+    <main>
+        <h2>Check a News Article</h2>
+        <p>Paste a news headline or article in the box below.</p>
+
+        <form id="newsForm">
+            <textarea
+                id="newsText"
+                placeholder="Paste your news article here..."
+                required
+                maxlength="50000"
+            ></textarea>
+
+            <button id="checkButton" type="submit">
+                Check News
+            </button>
+        </form>
+
+        <div id="result" class="hidden" role="status"
+             aria-live="polite"></div>
+
+        <p>
+            <small>
+                Note: This tool provides a machine-learning prediction,
+                not proof that a news claim is true or false.
+            </small>
+        </p>
+    </main>
+
+    <footer>
+        Fake News Detection Project | Built with Python and NLP
+    </footer>
+
+    <script>
+        const form = document.getElementById("newsForm");
+        const newsText = document.getElementById("newsText");
+        const result = document.getElementById("result");
+        const button = document.getElementById("checkButton");
+
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const news = newsText.value.trim();
+
+            if (!news) {
+                result.textContent = "Please enter some news text.";
+                result.classList.remove("hidden");
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = "Checking...";
+            result.textContent = "Analyzing your news...";
+            result.classList.remove("hidden");
+
+            try {
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ news: news })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Something went wrong.");
+                }
+
+                result.textContent =
+                    "Prediction: " + data.prediction +
+                    "\nEstimated model confidence: " +
+                    data.confidence + "%";
+            } catch (error) {
+                result.textContent =
+                    "Could not check the news. " + error.message;
+            } finally {
+                button.disabled = false;
+                button.textContent = "Check News";
+            }
+        });
+    </script>
+</body>
+</html>
